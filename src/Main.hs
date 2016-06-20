@@ -43,7 +43,8 @@ data Hangman = Hangman {
 instance Show Hangman where
   show game =
     (intersperse ' ' $ fmap renderPuzzleChar (filledCharacters game))
-    ++ "\nGuessed so far: " ++ triedCharacters game
+    ++ "\nGuessed so far: " ++ triedCharacters game ++
+    " (" ++ show (incorrectTries game) ++ " incorrect)"
 
 freshHangman word = Hangman {
     word = word
@@ -60,6 +61,10 @@ alreadyTried hangman userTry = userTry `elem` triedCharacters hangman
 renderPuzzleChar :: Maybe Char -> Char
 renderPuzzleChar Nothing = '_'
 renderPuzzleChar (Just character) = character
+
+incorrectTries :: Hangman -> Int
+incorrectTries hangman =
+  length $ filter (\c -> c `notElem` word hangman) (triedCharacters hangman)
 
 fillInCharacter :: Hangman -> Char -> Hangman
 fillInCharacter hangman userTry
@@ -95,12 +100,12 @@ handleTry hangman userTry = do
       putStrLn $ userTry : " is a miss! Try again."
       return $ fillInCharacter hangman userTry
 
-maxTries :: Int
-maxTries = 10
+maxIncorrectTries :: Int
+maxIncorrectTries = 10
 
 gameLost :: Hangman -> IO ()
 gameLost hangman =
-  if length (triedCharacters hangman) > maxTries then
+  if incorrectTries hangman > maxIncorrectTries then
     do
       putStrLn $ "Game over! The word was: " ++ map toUpper (word hangman)
       exitSuccess
